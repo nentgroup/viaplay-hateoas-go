@@ -230,7 +230,7 @@ func (r *Resource) EmbedCollection(rel Relation, re ResourceCollection) {
 	r.Embedded.AddCollection(rel, re)
 }
 
-// Map implements the interface Mapper.
+// GetMap implements the interface Mapper.
 func (r Resource) GetMap() Entry {
 	mapped := make(Entry)
 
@@ -256,37 +256,11 @@ func (r Resource) GetMap() Entry {
 }
 
 func (r *Resource) getPayloadMap() Entry {
+	inner := structToMap(r.Payload)
 
-	val := reflect.ValueOf(r.Payload)
-	payloadMap := Entry{}
-
-	for i := 0; i < val.NumField(); i++ {
-		typeField := val.Type().Field(i)
-		tag := typeField.Tag
-		tagValue := tag.Get("json")
-		if strings.Contains(tagValue, "omitempty") {
-			l := strings.Split(tagValue, ",")
-			for i, el := range l {
-				if el == "omitempty" {
-					l = append(l[:i], l[i+1:]...)
-					break
-				}
-			}
-			tagValue = strings.Join(l, ",")
-
-		}
-		if tagValue != "-" {
-			valueField := val.Field(i)
-
-			if tagValue == "" {
-				tagValue = typeField.Name
-			}
-
-			payloadMap[tagValue] = valueField.Interface()
-		}
+	return map[string]interface{}{
+		"data": inner,
 	}
-
-	return payloadMap
 }
 
 // MarshalJSON is a Marshaler interface implementation
@@ -308,4 +282,47 @@ func NewLink(href string, attrs ...LinkAttr) Link {
 	}
 
 	return l
+}
+
+func structToMap(payload interface{}) map[string]interface{} {
+	res := map[string]interface{}{}
+	if payload == nil {
+		return res
+	}
+	v := reflect.TypeOf(payload)
+	reflectValue := reflect.ValueOf(payload)
+	reflectValue = reflect.Indirect(reflectValue)
+
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	for i := 0; i < v.NumField(); i++ {
+		tag := v.Field(i).Tag.Get("json")
+
+		// remove omitEmpty
+		var omitEmpty bool
+		if strings.HasSuffix(tag, "omitempty") {
+			omitEmpty = true
+			idx := strings.Index(tag, ",")
+			if idx > 0 {
+				tag = tag[:idx]
+			} else {
+				tag = ""
+			}
+		}
+
+		field := reflectValue.Field(i).Interface()
+		if tag != "" && tag != "-" {
+			if v.Field(i).Type.Kind() == reflect.Struct {
+				if !reflectValue.Field(i).IsZero() {
+					res[tag] = structToMap(field)
+				}
+			} else {
+				if !(omitEmpty && reflectValue.Field(i).IsZero()) {
+					res[tag] = field
+				}
+			}
+		}
+	}
+	return res
 }
