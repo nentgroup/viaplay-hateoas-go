@@ -5,7 +5,7 @@ Hal
 [![Coverage Status](https://coveralls.io/repos/nvellon/hal/badge.svg?branch=master&service=github)](https://coveralls.io/github/nvellon/hal?branch=master)
 [![GoDoc](https://godoc.org/github.com/nvellon/hal?status.svg)](https://godoc.org/github.com/nvellon/hal)
 
-Go implementation of the [HAL standard](http://stateless.co/hal_specification.html).
+Go implementation of the [viaplay-HATEOAS standard](http://github.com/nentgroup/api-guidelines).
 
 This is a work in progress... Everything might/will change.
 

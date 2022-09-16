@@ -246,10 +246,10 @@ func (r Resource) GetMap() Entry {
 		mapped[k] = v
 	}
 
-	mapped["_links"] = r.Links
+	mapped["links"] = r.Links
 
 	if len(r.Embedded) > 0 {
-		mapped["_embedded"] = r.Embedded
+		mapped["embedded"] = r.Embedded
 	}
 
 	return mapped

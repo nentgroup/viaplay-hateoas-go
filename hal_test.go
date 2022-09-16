@@ -42,7 +42,7 @@ func TestLinkMarshal(t *testing.T) {
 }
 
 func TestResourceMarshal(t *testing.T) {
-	expected := `{"_links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -54,7 +54,7 @@ func TestResourceMarshal(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given: %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
@@ -69,7 +69,7 @@ func (dswm DummyStructWithMapper) GetMap() Entry {
 }
 
 func TestResourceMarshallWithMapper(t *testing.T) {
-	expected := `{"_links":{"self":{"href":"uri"}},"customName":"Dummy"}`
+	expected := `{"customName":"Dummy","links":{"self":{"href":"uri"}}}`
 
 	ds := DummyStructWithMapper{"Dummy"}
 
@@ -81,7 +81,7 @@ func TestResourceMarshallWithMapper(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given: %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
@@ -117,7 +117,7 @@ func TestNewLinkMultipleAttributes(t *testing.T) {
 }
 
 func TestRegisterCurie(t *testing.T) {
-	expected := `{"_links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -130,12 +130,12 @@ func TestRegisterCurie(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given: %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestRegisterMultipleCuries(t *testing.T) {
-	expected := `{"_links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true},{"href":"http://haltalk.herokuapp.com/abc/{rel}","name":"abc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true},{"href":"http://haltalk.herokuapp.com/abc/{rel}","name":"abc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -149,7 +149,7 @@ func TestRegisterMultipleCuries(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given: %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
@@ -178,7 +178,7 @@ func TestResourceCuries(t *testing.T) {
 }
 
 func TestAddNewLink(t *testing.T) {
-	expected := `{"_links":{"foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -191,12 +191,12 @@ func TestAddNewLink(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given: %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestAddNewLinkTwice(t *testing.T) {
-	expected := `{"_links":{"foo":[{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"foo":[{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -210,12 +210,12 @@ func TestAddNewLinkTwice(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestAddLinkCollection(t *testing.T) {
-	expected := `{"_links":{"foo":[{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"foo":[{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -228,12 +228,12 @@ func TestAddLinkCollection(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestAddLinkCollectionToLink(t *testing.T) {
-	expected := `{"_links":{"foo":[{"href":"baz"},{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"links":{"foo":[{"href":"baz"},{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -247,13 +247,13 @@ func TestAddLinkCollectionToLink(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 /* Test Embedded */
 func TestEmbed(t *testing.T) {
-	expected := `{"_embedded":{"foo":{"_links":{"self":{"href":"uri2"}},"name":"DummyEmbed"}},"_links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"embedded":{"foo":{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"}},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -268,12 +268,12 @@ func TestEmbed(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given: %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestEmbedTwice(t *testing.T) {
-	expected := `{"_embedded":{"foo":[{"_links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"_links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"}]},"_links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -291,12 +291,12 @@ func TestEmbedTwice(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestAddResourceCollection(t *testing.T) {
-	expected := `{"_embedded":{"foo":[{"_links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"_links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"}]},"_links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -313,12 +313,12 @@ func TestAddResourceCollection(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestAddResourceCollectionToResource(t *testing.T) {
-	expected := `{"_embedded":{"foo":[{"_links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"_links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"},{"_links":{"self":{"href":"uri4"}},"name":"DummyEmbed3"}]},"_links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"},{"links":{"self":{"href":"uri4"}},"name":"DummyEmbed3"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -338,21 +338,21 @@ func TestAddResourceCollectionToResource(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, jr, expected)
 	}
 }
 
 func TestOmitEmptyReflection(t *testing.T) {
-	expected := `{"_links":{"self":{"href":"test"}},"id":null}`
+	expected := `{"id":null,"links":{"self":{"href":"test"}}}`
 	dummyStruct := struct {
 		ID *int `json:"id,omitempty"`
 	}{}
-	r := NewResource(dummyStruct,"test")
+	r := NewResource(dummyStruct, "test")
 	res, err := json.Marshal(r)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
 	if string(res) != expected {
-		t.Errorf("Wrong Resource struct: %s\n- Given:    %s\n- Expected: %s", r, res, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given:    %v\n- Expected: %s", r, res, expected)
 	}
 }
