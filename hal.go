@@ -85,12 +85,11 @@ func (e Embedded) AddCollection(rel Relation, r ResourceCollection) {
 // Add appends the resource into the list of embedded
 // resources with the specified relation.
 // r should be a Resource
-// every embed relation will always be an array of *Resource
 func (e Embedded) Add(rel Relation, r *Resource) {
 	n := e[rel]
 	if n == nil {
 		//new embed
-		e[rel] = []*Resource{r}
+		e[rel] = r
 		return
 	}
 
