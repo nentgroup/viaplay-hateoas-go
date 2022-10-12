@@ -85,11 +85,12 @@ func (e Embedded) AddCollection(rel Relation, r ResourceCollection) {
 // Add appends the resource into the list of embedded
 // resources with the specified relation.
 // r should be a Resource
+// every embed relation will always be an array of *Resource
 func (e Embedded) Add(rel Relation, r *Resource) {
 	n := e[rel]
 	if n == nil {
 		//new embed
-		e[rel] = r
+		e[rel] = []*Resource{r}
 		return
 	}
 
@@ -115,7 +116,7 @@ func (e Embedded) Set(rel Relation, r *Resource) {
 	e[rel] = r
 }
 
-// Set sets the resource into the list of embedded
+// SetCollection sets the resource into the list of embedded
 // resources with the specified relation. It replaces
 // any existing resources associated with the relation.
 // r should be a ResourceCollection
@@ -257,8 +258,7 @@ func (r Resource) GetMap() Entry {
 
 func (r *Resource) getPayloadMap() Entry {
 	inner := structToMap(r.Payload)
-
-	return map[string]interface{}{
+	return Entry{
 		"data": inner,
 	}
 }
