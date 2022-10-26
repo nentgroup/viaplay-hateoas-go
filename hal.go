@@ -256,10 +256,36 @@ func (r Resource) GetMap() Entry {
 }
 
 func (r *Resource) getPayloadMap() Entry {
-	inner := structToMap(r.Payload)
-	return Entry{
-		"data": inner,
+	val := reflect.ValueOf(r.Payload)
+	payloadMap := Entry{}
+
+	for i := 0; i < val.NumField(); i++ {
+		typeField := val.Type().Field(i)
+		tag := typeField.Tag
+		tagValue := tag.Get("json")
+		if strings.Contains(tagValue, "omitempty") {
+			l := strings.Split(tagValue, ",")
+			for i, el := range l {
+				if el == "omitempty" {
+					l = append(l[:i], l[i+1:]...)
+					break
+				}
+			}
+			tagValue = strings.Join(l, ",")
+
+		}
+		if tagValue != "-" {
+			valueField := val.Field(i)
+
+			if tagValue == "" {
+				tagValue = typeField.Name
+			}
+
+			payloadMap[tagValue] = valueField.Interface()
+		}
 	}
+
+	return payloadMap
 }
 
 // MarshalJSON is a Marshaler interface implementation
