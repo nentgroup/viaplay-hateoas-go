@@ -142,8 +142,10 @@ func NewResource(p interface{}, selfUri string) *Resource {
 
 	r.Payload = p
 
-	r.Links = make(LinkRelations)
-	r.AddNewLink("self", selfUri)
+	if selfUri != "" {
+		r.Links = make(LinkRelations)
+		r.AddNewLink("self", selfUri)
+	}
 
 	r.Embedded = make(Embedded)
 	r.Curies = make(map[string]*CurieHandle)
