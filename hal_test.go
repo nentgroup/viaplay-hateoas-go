@@ -174,7 +174,6 @@ func TestResourceCuries(t *testing.T) {
 	if curie != curies[curieName] {
 		t.Errorf("curieHandle returned by RegisterCurie() is not the same reference")
 	}
-
 }
 
 func TestAddNewLink(t *testing.T) {
@@ -253,7 +252,7 @@ func TestAddLinkCollectionToLink(t *testing.T) {
 
 /* Test Embedded */
 func TestEmbed(t *testing.T) {
-	expected := `{"embedded":{"foo":{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"}},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -268,7 +267,7 @@ func TestEmbed(t *testing.T) {
 	}
 
 	if string(jr) != expected {
-		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, jr, expected)
+		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, string(jr), expected)
 	}
 }
 

@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/nentgroup/viaplay-hateoas-go"
+
+	hal "github.com/nentgroup/viaplay-hateoas-go"
 )
 
 type (

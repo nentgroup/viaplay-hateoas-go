@@ -32,7 +32,7 @@ type (
 		*Resource
 	}
 
-	// Link types that store hyperlinks and its attributes.
+	// LinkAttr types that store hyperlinks and its attributes.
 	LinkAttr       map[string]interface{}
 	Link           LinkAttr
 	LinkCollection []Link
@@ -57,7 +57,7 @@ type (
 // prepended with the curie Name
 func (c CurieHandle) AddNewLink(rel Relation, href string) {
 	rel = Relation(c.Name) + ":" + rel
-	c.Resource.AddLink(rel, NewLink(href, nil))
+	c.AddLink(rel, NewLink(href, nil))
 }
 
 // AddCollection appends the resource into the list of embedded
@@ -66,7 +66,7 @@ func (c CurieHandle) AddNewLink(rel Relation, href string) {
 func (e Embedded) AddCollection(rel Relation, r ResourceCollection) {
 	n := e[rel]
 	if n == nil {
-		//new embed
+		// new embed
 		e[rel] = r
 		return
 	}
@@ -79,7 +79,6 @@ func (e Embedded) AddCollection(rel Relation, r ResourceCollection) {
 	if nr, ok := n.(*Resource); ok {
 		e[rel] = append([]*Resource{nr}, r...)
 	}
-
 }
 
 // Add appends the resource into the list of embedded
@@ -88,8 +87,8 @@ func (e Embedded) AddCollection(rel Relation, r ResourceCollection) {
 func (e Embedded) Add(rel Relation, r *Resource) {
 	n := e[rel]
 	if n == nil {
-		//new embed
-		e[rel] = r
+		// new embed
+		e[rel] = []*Resource{r}
 		return
 	}
 
@@ -103,7 +102,7 @@ func (e Embedded) Add(rel Relation, r *Resource) {
 		return
 	}
 
-	//something went wrong.. replace what is there with what is new
+	// something went wrong.. replace what is there with what is new
 	e[rel] = []*Resource{r}
 }
 
@@ -158,7 +157,7 @@ func NewResource(p interface{}, selfUri string) *Resource {
 func (r *Resource) AddLinkCollection(rel Relation, l LinkCollection) {
 	n := r.Links[rel]
 	if n == nil {
-		//new link
+		// new link
 		r.Links[rel] = l
 		return
 	}
@@ -169,7 +168,7 @@ func (r *Resource) AddLinkCollection(rel Relation, l LinkCollection) {
 	}
 
 	if nl, ok := n.(Link); ok {
-		//prepend existing link to collection
+		// prepend existing link to collection
 		r.Links[rel] = append(LinkCollection{nl}, l...)
 	}
 }
@@ -179,7 +178,7 @@ func (r *Resource) AddLinkCollection(rel Relation, l LinkCollection) {
 func (r *Resource) AddLink(rel Relation, l Link) {
 	n := r.Links[rel]
 	if n == nil {
-		//new link
+		// new link
 		r.Links[rel] = l
 		return
 	}
@@ -194,7 +193,7 @@ func (r *Resource) AddLink(rel Relation, l Link) {
 		return
 	}
 
-	//something went wrong.. replace what is there with what is new
+	// something went wrong.. replace what is there with what is new
 	r.Links[rel] = LinkCollection{l}
 }
 
@@ -274,7 +273,6 @@ func (r *Resource) getPayloadMap() Entry {
 				}
 			}
 			tagValue = strings.Join(l, ",")
-
 		}
 		if tagValue != "-" {
 			valueField := val.Field(i)
@@ -309,47 +307,4 @@ func NewLink(href string, attrs ...LinkAttr) Link {
 	}
 
 	return l
-}
-
-func structToMap(payload interface{}) map[string]interface{} {
-	res := map[string]interface{}{}
-	if payload == nil {
-		return res
-	}
-	v := reflect.TypeOf(payload)
-	reflectValue := reflect.ValueOf(payload)
-	reflectValue = reflect.Indirect(reflectValue)
-
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	for i := 0; i < v.NumField(); i++ {
-		tag := v.Field(i).Tag.Get("json")
-
-		// remove omitEmpty
-		var omitEmpty bool
-		if strings.HasSuffix(tag, "omitempty") {
-			omitEmpty = true
-			idx := strings.Index(tag, ",")
-			if idx > 0 {
-				tag = tag[:idx]
-			} else {
-				tag = ""
-			}
-		}
-
-		field := reflectValue.Field(i).Interface()
-		if tag != "" && tag != "-" {
-			if v.Field(i).Type.Kind() == reflect.Struct {
-				if !reflectValue.Field(i).IsZero() {
-					res[tag] = structToMap(field)
-				}
-			} else {
-				if !(omitEmpty && reflectValue.Field(i).IsZero()) {
-					res[tag] = field
-				}
-			}
-		}
-	}
-	return res
 }

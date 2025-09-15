@@ -1,0 +1,71 @@
+---
+
+name: Test Telemetry library
+
+on:
+  push:
+    branches:
+      - "feature/*"
+      - "bugfix/*"
+      - "hotfix/*"
+      - "chore/*"
+      - "refactor/*"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - develop
+  workflow_call:
+
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+          - '1.24'
+          - '1.25'
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Setup Go ${{ matrix.go-version }}
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Display Go version
+        run: go version
+
+      - name: Run tests
+        run: go test -v ./... -covermode=count -coverpkg=./...
+
+  commitlint:
+    name: Check Commit Messages
+    runs-on: ubuntu-latest
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+      - name: Install commitlint
+        run: go install github.com/conventionalcommit/commitlint@latest
+
+      - name: Lint PR title (for squash merges)
+        if: github.event_name == 'pull_request'
+        run: echo "$PR_TITLE" | commitlint lint
+
+      - name: Lint last commit message (for direct pushes)
+        if: github.event_name == 'push'
+        run: git log -1 --pretty=format:"%s" | commitlint lint
+
+...
