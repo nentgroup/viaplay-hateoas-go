@@ -40,7 +40,7 @@ jobs:
         run: go version
 
       - name: Run tests
-        run: go test -v ./... -covermode=count -coverpkg=./...
+        run: go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go
 
   commitlint:
     name: Check Commit Messages
@@ -67,5 +67,3 @@ jobs:
       - name: Lint last commit message (for direct pushes)
         if: github.event_name == 'push'
         run: git log -1 --pretty=format:"%s" | commitlint lint
-
-...

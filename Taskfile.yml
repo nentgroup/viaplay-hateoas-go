@@ -6,7 +6,7 @@ version: '3'
 tasks:
   test:
     cmds:
-      - go test -v ./... -covermode=atomic -coverpkg=./... -race
+      - go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go
 
   setup:tools:
     desc: Install and configure development tools (lefthook, commitlint, golangci-lint, Task)
