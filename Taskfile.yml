@@ -1,0 +1,49 @@
+---
+# For more configuration options, see https://taskfile.dev/docs/guide
+
+version: '3'
+
+tasks:
+  test:
+    cmds:
+      - go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go
+
+  setup:tools:
+    desc: Install and configure development tools (lefthook, commitlint, golangci-lint, Task)
+    cmds:
+      - echo "Setting up development tools"
+      - chmod +x scripts/setup.sh
+      - ./scripts/setup.sh
+      - echo "✅ Development tools setup complete"
+
+  setup:
+    desc: Setup everything needed for development
+    deps:
+      - setup:tools
+      - deps:install
+    cmds:
+      - echo "✅ Development environment setup complete"
+
+  lint:
+    desc: run linters
+    cmds:
+      - golangci-lint run --allow-parallel-runners --fix
+      - actionlint
+
+  deps:update:
+    desc: Check for dependency updates
+    cmds:
+      - echo "Checking for dependency updates"
+      - go get -u ./...
+      - go mod tidy
+      - echo "✅ Dependencies updated"
+
+  deps:install:
+    desc: Install all dependencies
+    cmds:
+      - echo "Installing dependencies"
+      - go mod download
+      - go mod tidy
+      - echo "✅ Dependencies installed"
+
+...

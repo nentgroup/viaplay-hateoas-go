@@ -1,18 +1,23 @@
-Hal
-===
+<img src="./.github/assets/gopher.png" align="right" height="96" width="96"/>
 
-[![Build Status](https://travis-ci.org/nvellon/hal.svg)](https://travis-ci.org/nvellon/hal)
-[![Coverage Status](https://coveralls.io/repos/nvellon/hal/badge.svg?branch=master&service=github)](https://coveralls.io/github/nvellon/hal?branch=master)
-[![GoDoc](https://godoc.org/github.com/nvellon/hal?status.svg)](https://godoc.org/github.com/nvellon/hal)
 
-Go implementation of the [viaplay-HATEOAS standard](http://github.com/nentgroup/api-guidelines).
+# Viaplay HATEOAS for Go
+[![Tests](https://github.com/nentgroup/viaplay-hateoas-go/actions/workflows/tests.yml/badge.svg)](https://github.com/nentgroup/viaplay-hateoas-go/actions/workflows/tests.yml)
 
-This is a work in progress... Everything might/will change.
+A Go implementation of the [Viaplay HATEOAS standard](http://github.com/nentgroup/api-guidelines) for creating hypermedia-driven RESTful APIs.
 
-Usage
------
 
-The library gives a way of mapping Go Structs into HAL Resources by implementing the `hal.Mapper` interface. You only need to define which fields you want and how you want them translated.
+## 📦 Installation
+
+```bash
+go get github.com/nentgroup/viaplay-hateoas-go
+```
+
+---
+
+## 🚀 Usage
+
+This library allows you to map Go structs into HAL Resources by implementing the `hal.Mapper` interface. You only need to define which fields you want and how they should be represented.
 
 ```go
 type Mapper interface {
@@ -20,12 +25,14 @@ type Mapper interface {
 }
 ```
 
+### 🔍 Basic Example
+
 For a given Product struct, this would be the `hal.Mapper` implementation:
 
 ```go
 type Product struct {
-	Code int
-	Name string
+	Code  int
+	Name  string
 	Price int
 }
 
@@ -37,19 +44,19 @@ func (p Product) GetMap() hal.Entry {
 }
 ```
 
-Then you can just create a HAL Resource for a Product by:
+Then you can create a HAL Resource for a Product by:
 
 ```go
 p := Product{
-	Code: 1,
-	Name: "Some Product",
-	Price: 10
+	Code:  1,
+	Name:  "Some Product",
+	Price: 10,
 }
 
 pr := hal.NewResource(p, "http://rest.api/products/1")
 ```
 
-And pass it through `json.Marsal` when needed getting this result:
+When marshalled to JSON, this produces:
 
 ```json
 {
@@ -61,12 +68,13 @@ And pass it through `json.Marsal` when needed getting this result:
 }
 ```
 
-Embedded Resources
-------------------
+---
 
-Let's say your API has to serve a list of Task structs.
+## 🔄 Embedded Resources
 
-Since for HAL standard everything is a resource, even the entire API response could be seen as a resource containing other embedded resources. Check this out:
+Let's say your API needs to serve a list of Task structs.
+
+Since in HAL standard everything is a resource, even the API response itself can be treated as a resource containing other embedded resources:
 
 ```go
 type (
@@ -96,7 +104,7 @@ func (c Task) GetMap() hal.Entry {
 }
 ```
 
-Then you could create the Resources by doing something like this:
+### Creating and Embedding Resources
 
 ```go
 // Creating Response resource
@@ -112,7 +120,7 @@ r.Embed("tasks", t1)
 r.Embed("tasks", t2)
 ```
 
-Output:
+This produces:
 
 ```json
 {
@@ -151,32 +159,35 @@ Output:
 }
 ```
 
-CURIES
-------
-To include CURIE relations in your output you can 'register' the curie name and fluently add a link relation as follows:
+---
+
+## 🔗 CURIES
+
+To include CURIE relations in your output, you can 'register' the curie name and fluently add a link relation:
 
 ```go
 p := Product{
-	Code: 1,
-	Name: "Some Product",
-	Price: 10
+	Code:  1,
+	Name:  "Some Product",
+	Price: 10,
 }
 
 // Creating Product resource
 pr := hal.NewResource(p, "http://rest.api/products/1")
-pr.RegisterCurie("acme", "http://acme.com/docs/{rel}", true).AddNewLink("widgets", "http://rest.api/products/1/widgets")
+pr.RegisterCurie("acme", "http://acme.com/docs/{rel}", true)
+   .AddNewLink("widgets", "http://rest.api/products/1/widgets")
 ```
 
-Output
+Output:
 
 ```json
 {
 	"_links": {
 		"self": {"href": "http://rest.api/products/1"},
 		"curies": [{ 
-		        "name":"acme",
-		        "href":"http://acme.com/docs/{rel}",
-		        "templated":true
+		        "name": "acme",
+		        "href": "http://acme.com/docs/{rel}",
+		        "templated": true
 		    }],
 		"acme:widgets": { "href": "http://rest.api/products/1/widgets" }
 	},
@@ -185,20 +196,29 @@ Output
 }
 ```
 
-Registered curies can also be retreived by name from the resources' Curies map:
+### Alternative Method
 
+Registered curies can also be retrieved by name from the resources' Curies map:
 
 ```go
 pr := hal.NewResource(p, "http://rest.api/products/1")
 pr.RegisterCurie("acme", "http://acme.com/docs/{rel}", true)
-...
+// ...
 
 curie := pr.Curies["acme"]
 curie.AddNewLink("widgets", "http://rest.api/products/1/widgets")
 ```
 
+---
 
-Todo
-----
+## 🛣️ Future Plans
 
- * XML Marshaler.
+- XML Marshaler support
+- Improved documentation
+- More examples
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
