@@ -1,8 +1,11 @@
-# 🔄 Viaplay HATEOAS Go
+<img src="./.github/assets/gopher.png" align="right" height="96" width="96"/>
+
+
+# Viaplay HATEOAS for Go
+[![Tests](https://github.com/nentgroup/viaplay-hateoas-go/actions/workflows/tests.yml/badge.svg)](https://github.com/nentgroup/viaplay-hateoas-go/actions/workflows/tests.yml)
 
 A Go implementation of the [Viaplay HATEOAS standard](http://github.com/nentgroup/api-guidelines) for creating hypermedia-driven RESTful APIs.
 
----
 
 ## 📦 Installation
 
