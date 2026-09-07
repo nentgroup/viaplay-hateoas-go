@@ -5,31 +5,9 @@
 # Viaplay HATEOAS for Go
 [![Tests](https://github.com/nentgroup/viaplay-hateoas-go/actions/workflows/test.yml/badge.svg)](https://github.com/nentgroup/viaplay-hateoas-go/actions/workflows/test.yml)
 
-A Go implementation of the [Viaplay HATEOAS standard](http://github.com/nentgroup/api-guidelines) for creating hypermedia-driven RESTful APIs.
+A Go library for building hypermedia-driven RESTful APIs, following the [Viaplay HATEOAS standard](http://github.com/nentgroup/api-guidelines).
 
-## <img src="./.github/assets/icons/chart-dark.svg" align="center" height="20" width="20"/> v2 Embedded semantics
-
-This package treats embedded relations as collections internally, but marshals them to the HAL shape implied by cardinality:
-
-- one embedded resource => single object
-- many embedded resources => array
-
-```go
-r := hal.NewResource(product, "/products/1")
-r.Embedded = make(hal.Embedded)
-
-child := hal.NewResource(category, "/categories/1")
-second := hal.NewResource(category, "/categories/2")
-
-r.Embedded.Set("category", child)      // serializes as {"category": {...}}
-r.Embedded.Add("category", second)      // serializes as {"category": [{...}, {...}]}
-r.Embedded.SetCollection("category", hal.ResourceCollection{child, second})
-```
-
-Use `Set` when you want a single object and `Add` / `AddCollection` when you want a collection.
-
-
-## <img src="./.github/assets/icons/settings-dark.svg" align="center" height="20" width="20"/> Installation
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/settings-dark.svg"><img src="./.github/assets/icons/settings-light.svg" alt="Installation" width="20" height="20" aria-label="Installation"></picture> Installation
 
 ```bash
 go get github.com/nentgroup/viaplay-hateoas-go/v2
@@ -37,9 +15,9 @@ go get github.com/nentgroup/viaplay-hateoas-go/v2
 
 ---
 
-## <img src="./.github/assets/icons/rocket-dark.svg" align="center" height="20" width="20"/> Usage
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/rocket-dark.svg"><img src="./.github/assets/icons/rocket-light.svg" alt="Usage" width="20" height="20" aria-label="Usage"></picture> Usage
 
-This library allows you to map Go structs into HAL Resources by implementing the `hal.Mapper` interface. You only need to define which fields you want and how they should be represented.
+Map your Go structs into HAL resources by implementing the `hal.Mapper` interface — just declare which fields to expose and how:
 
 ```go
 type Mapper interface {
@@ -47,7 +25,7 @@ type Mapper interface {
 }
 ```
 
-### <img src="./.github/assets/icons/search-dark.svg" align="center" height="18" width="18"/> Basic Example
+### <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/search-dark.svg"><img src="./.github/assets/icons/search-light.svg" alt="Basic Example" width="18" height="18" aria-label="Basic Example"></picture> Basic Example
 
 For a given Product struct, this would be the `hal.Mapper` implementation:
 
@@ -94,11 +72,9 @@ When marshalled to JSON, this produces (using the default `FlavorViaplay` flavor
 
 ---
 
-## <img src="./.github/assets/icons/layers-dark.svg" align="center" height="20" width="20"/> Embedded Resources
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/layers-dark.svg"><img src="./.github/assets/icons/layers-light.svg" alt="Embedded Resources" width="20" height="20" aria-label="Embedded Resources"></picture> Embedded Resources
 
-Let's say your API needs to serve a list of Task structs.
-
-Since in HAL standard everything is a resource, even the API response itself can be treated as a resource containing other embedded resources:
+In HAL, even the API response itself is a resource, and it can embed other resources. Say your API serves a list of Task structs:
 
 ```go
 type (
@@ -128,7 +104,7 @@ func (c Task) GetMap() hal.Entry {
 }
 ```
 
-### Creating and Embedding Resources
+Create the parent resource, then embed child resources under a relation name. Embed the same relation more than once and it becomes a collection; embed it once and it stays a single object:
 
 ```go
 // Creating Response resource
@@ -143,9 +119,11 @@ t2 := hal.NewResource(Task{Id: 2, Name: "Some Task"}, "/tasks/2")
 r.Embed("tasks", t1)
 r.Embed("tasks", t2)
 
-// Or override a single embedded resource as an object
+// Or set a single embedded resource as an object
 r.Embedded.Set("task", t1)
 ```
+
+Use `Set` / `SetCollection` when you want to explicitly define a relation as a single object or a collection, and `Add` / `AddCollection` (or the `Embed` shortcut above) when you just want to keep appending to it.
 
 This produces (using the default `FlavorViaplay` flavor):
 
@@ -194,9 +172,9 @@ This produces (using the default `FlavorViaplay` flavor):
 
 ---
 
-## <img src="./.github/assets/icons/link-dark.svg" align="center" height="20" width="20"/> CURIES
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/link-dark.svg"><img src="./.github/assets/icons/link-light.svg" alt="CURIES" width="20" height="20" aria-label="CURIES"></picture> CURIES
 
-To include CURIE relations in your output, you can 'register' the curie name and fluently add a link relation:
+To include CURIE relations in your output, register the curie name and fluently add a link relation:
 
 ```go
 p := Product{
@@ -231,9 +209,7 @@ Output (using the default `FlavorViaplay` flavor):
 }
 ```
 
-### Alternative Method
-
-Registered curies can also be retrieved by name from the resources' Curies map:
+Registered curies can also be retrieved by name from the resource's `Curies` map:
 
 ```go
 pr := hal.NewResource(p, "http://rest.api/products/1")
@@ -246,16 +222,16 @@ curie.AddNewLink("widgets", "http://rest.api/products/1/widgets")
 
 ---
 
-## <img src="./.github/assets/icons/settings-dark.svg" align="center" height="20" width="20"/> Flavors: Viaplay HAL vs canonical HAL
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/settings-dark.svg"><img src="./.github/assets/icons/settings-light.svg" alt="Flavors" width="20" height="20" aria-label="Flavors"></picture> Flavors: Viaplay HAL vs canonical HAL
 
-By default, every resource created with `hal.NewResource` uses the [Viaplay flavor](./specs/viaplay-hateoas.md): payload nested under a `data` key, with unprefixed `links`/`embedded` keys. You can opt a resource into the historical flattened shape (`FlavorDefault`) or into canonical [HAL](https://datatracker.ietf.org/doc/html/draft-kelly-json-hal) (`_links`/`_embedded`, `FlavorHAL`) by setting the `Flavor` field — there's no constructor to thread options through, `Resource` fields are just public:
+By default, every resource created with `hal.NewResource` uses the [Viaplay flavor](./specs/viaplay-hateoas.md): payload nested under a `data` key, with unprefixed `links`/`embedded` keys. You can opt a resource into the historical flattened shape (`FlavorDefault`) or into canonical [HAL](https://datatracker.ietf.org/doc/html/draft-kelly-json-hal) (`_links`/`_embedded`, `FlavorHAL`) by setting the `Flavor` field:
 
 ```go
 pr := hal.NewResource(p, "/products/1")
 pr.Flavor = hal.FlavorHAL // or hal.FlavorDefault
 ```
 
-To switch an entire application at once (so every resource created afterwards inherits it), set the package-level default before creating any resources:
+To switch an entire application at once, set the package-level default before creating any resources — every resource created afterwards will inherit it:
 
 ```go
 hal.DefaultFlavor = hal.FlavorHAL
@@ -321,9 +297,9 @@ Given the same `Product` resource (with an embedded `category`), here is the JSO
 
 ---
 
-## <img src="./.github/assets/icons/document-dark.svg" align="center" height="20" width="20"/> XML Output
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/document-dark.svg"><img src="./.github/assets/icons/document-light.svg" alt="XML Output" width="20" height="20" aria-label="XML Output"></picture> XML Output
 
-`Resource` implements `xml.Marshaler`, so the same resource graph you build for JSON can be marshalled to a HAL+XML representation as well. XML output is flavor-agnostic — payload fields are always flattened as child elements, regardless of the resource's `Flavor`:
+`Resource` implements `xml.Marshaler`, so the same resource graph you build for JSON can also be marshalled to a HAL+XML representation. XML output is flavor-agnostic — payload fields are always flattened as child elements, regardless of the resource's `Flavor`:
 
 ```go
 pr := hal.NewResource(p, "/products/1")
@@ -348,7 +324,7 @@ See `examples/xml` for a full example.
 
 ---
 
-## <img src="./.github/assets/icons/settings-dark.svg" align="center" height="20" width="20"/> Generics Helpers
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/chart-dark.svg"><img src="./.github/assets/icons/chart-light.svg" alt="Generics Helpers" width="20" height="20" aria-label="Generics Helpers"></picture> Generics Helpers
 
 A few small generic helpers reduce boilerplate around typed payloads:
 
@@ -371,9 +347,9 @@ See `examples/generics` for a full example.
 
 ---
 
-## <img src="./.github/assets/icons/chart-dark.svg" align="center" height="20" width="20"/> v2 Migration
+## <picture><source media="(prefers-color-scheme: dark)" srcset="./.github/assets/icons/rocket-dark.svg"><img src="./.github/assets/icons/rocket-light.svg" alt="Migrating from v1" width="20" height="20" aria-label="Migrating from v1"></picture> Migrating from v1
 
-Upgrading from v1? See [MIGRATION.md](./MIGRATION.md) for the full list of breaking changes and how to adapt your code.
+Upgrading from v1? See [MIGRATION.md](./docs/MIGRATION.md) for the full list of breaking changes and how to adapt your code.
 
 ---
 

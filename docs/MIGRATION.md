@@ -39,10 +39,7 @@ type Embedded map[Relation]interface{}
 type Embedded map[Relation]ResourceCollection
 ```
 
-Internally every relation is stored as a `ResourceCollection` (`[]*Resource`).
-This removes the `interface{}` type-switch juggling that `Add`/`AddCollection`
-had to do in v1, and makes it possible to add a `Get` accessor with a
-concrete, useful return type:
+A new `Get` accessor returns a concrete, typed value instead of `interface{}`:
 
 ```go
 func (e Embedded) Get(rel Relation) ResourceCollection

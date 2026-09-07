@@ -4,7 +4,7 @@
     "packages": {
         ".": {
             "package-name": "github.com/nentgroup/viaplay-hateoas-go",
-            "changelog-path": "changelog.md",
+            "changelog-path": "docs/changelog.md",
             "initial-version": "1.0.0",
             "prerelease": false,
             "prerelease-type": "beta"
