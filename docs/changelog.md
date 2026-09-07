@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0](https://github.com/nentgroup/viaplay-hateoas-go/compare/v1.0.2...v2.0.0) (2026-09-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **hal:** release v2 with breaking changes to API ([#15](https://github.com/nentgroup/viaplay-hateoas-go/issues/15))
+
+### Features
+
+* **hal:** release v2 with breaking changes to API ([#15](https://github.com/nentgroup/viaplay-hateoas-go/issues/15)) ([becd282](https://github.com/nentgroup/viaplay-hateoas-go/commit/becd2825ba1ed220bf8308c0a128c2b2e83c5ca2))
+
+
+### Documentation
+
+* trim readme and migration guide ([0fc65b2](https://github.com/nentgroup/viaplay-hateoas-go/commit/0fc65b200060a4ca6745709f5227b266a897fb30))
+
 ## [1.0.2](https://github.com/nentgroup/viaplay-hateoas-go/compare/v1.0.1...v1.0.2) (2026-04-19)
 
 
