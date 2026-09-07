@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	hal "github.com/nentgroup/viaplay-hateoas-go"
+	hal "github.com/nentgroup/viaplay-hateoas-go/v2"
 )
 
 type (
@@ -33,14 +33,18 @@ func (c Task) GetMap() hal.Entry {
 	}
 }
 
+// someTaskName is the shared placeholder task name used across the example
+// resources below.
+const someTaskName = "Some Task"
+
 func main() {
 	// Creating HAL Resources
 	r := hal.NewResource(Response{Count: 10, Total: 20}, "/tasks")
 	r.AddNewLink("next", "/tasks=page=2")
 
-	t1 := hal.NewResource(Task{Id: 1, Name: "Some Task"}, "/tasks/1")
-	t2 := hal.NewResource(Task{Id: 2, Name: "Some Task"}, "/tasks/2")
-	t3 := hal.NewResource(Task{Id: 3, Name: "Some Task"}, "/tasks/3")
+	t1 := hal.NewResource(Task{Id: 1, Name: someTaskName}, "/tasks/1")
+	t2 := hal.NewResource(Task{Id: 2, Name: someTaskName}, "/tasks/2")
+	t3 := hal.NewResource(Task{Id: 3, Name: someTaskName}, "/tasks/3")
 
 	// Embeding tasks
 	r.Embed("tasks", t1)

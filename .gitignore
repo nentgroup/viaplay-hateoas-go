@@ -1,5 +1,38 @@
+# Build artifacts
 /build/
-/.idea/
 /bin/
-/tmp/
+/dist/
+
+# Go compiled test binaries (e.g. `go test -c`, package.test)
+*.test
+
+# Go coverage / profiling output
+*.out
+coverage.txt
+coverage.html
+*.prof
+*.pprof
+
+# Go workspace files (only relevant if using `go work`)
+go.work
+go.work.sum
+
+# Editors / IDEs
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# OS cruft
 .DS_Store
+Thumbs.db
+
+# Local scratch/tmp
+/tmp/
+
+# Task runner cache
+/.task/
+
+# graphify tool output
+graphify-rs-out/
+graphify-out/
