@@ -16,7 +16,7 @@ pre-push:
   parallel: true
   jobs:
     - name: test
-      run: go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go
+      run: go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go/v2
 
 commit-msg:
   jobs:

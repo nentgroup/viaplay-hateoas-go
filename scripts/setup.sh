@@ -161,6 +161,22 @@ else
   echo "✅ Task is already installed"
 fi
 
+# Check if graphify-rs is already installed
+# graphify-rs indexes the codebase into a knowledge graph used for AI-assisted
+# navigation (see AGENTS.md/CLAUDE.md). It's optional tooling: setup should not
+# fail if it can't be installed (e.g. no Rust toolchain available).
+if ! command_exists graphify-rs; then
+  echo "Installing graphify-rs..."
+
+  if command_exists cargo; then
+    cargo install graphify-rs && graphify_rs_installed=true
+  else
+    echo "⚠️  Skipping graphify-rs: install Rust/cargo, then run this again, or install graphify-rs manually."
+  fi
+else
+  echo "✅ graphify-rs is already installed"
+fi
+
 # Initialize lefthook hooks
 echo "Setting up git hooks..."
 lefthook install
@@ -175,5 +191,6 @@ echo "Installation summary:"
 [ "$commitlint_installed" = true ] && echo "✅ commitlint newly installed" || echo "✅ commitlint was already installed"
 [ "$golangci_lint_installed" = true ] && echo "✅ golangci-lint v2 newly installed or upgraded" || echo "✅ golangci-lint v2 was already installed"
 [ "$task_installed" = true ] && echo "✅ Task newly installed" || echo "✅ Task was already installed"
+[ "$graphify_rs_installed" = true ] && echo "✅ graphify-rs newly installed" || echo "✅ graphify-rs was already installed"
 
 echo "Your git hooks are now active. They will run automatically on git operations."

@@ -1,3 +1,3 @@
-module github.com/nentgroup/viaplay-hateoas-go
+module github.com/nentgroup/viaplay-hateoas-go/v2
 
-go 1.25
+go 1.27

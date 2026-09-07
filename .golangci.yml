@@ -50,6 +50,13 @@ linters:
     goconst:
       min-len: 3
       min-occurrences: 3
+    ireturn:
+      allow:
+        - error
+        - anon
+        - empty
+        - stdlib
+        - generic
     gocritic:
       enabled-tags:
         - diagnostic
@@ -93,6 +100,7 @@ linters:
           - ineffassign
           - noctx
           - staticcheck
+          - goconst
         path: _test\.go
       - linters:
           - lll
@@ -112,10 +120,11 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/nentgroup/viaplay-hateoas-go
+        - github.com/nentgroup/viaplay-hateoas-go/v2
     gofumpt:
-      module-path: github.com/nentgroup/viaplay-hateoas-go
-      extra-rules: true
+      module-path: github.com/nentgroup/viaplay-hateoas-go/v2
+      extra:
+        group-params: true
   exclusions:
     generated: lax
     paths:

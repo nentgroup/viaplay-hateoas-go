@@ -9,17 +9,17 @@ type DummyStruct struct {
 	Name string `json:"name"`
 }
 
-// dummyResourceJSON is the canonical marshaled form of NewResource(DummyStruct{"Dummy"}, "uri").
-// It is shared across multiple tests to satisfy the goconst linter.
-const dummyResourceJSON = `{"links":{"self":{"href":"uri"}},"name":"Dummy"}`
+// dummyResourceJSON is the canonical marshaled form of NewResource(DummyStruct{"Dummy"}, "uri")
+// under the FlavorViaplay default: payload nested under "data".
+const dummyResourceJSON = `{"data":{"name":"Dummy"},"links":{"self":{"href":"uri"}}}`
 
 // dummyResourceWithFooLinkCollectionJSON is the marshaled form of a Dummy resource
 // that has a "foo" link relation containing two links ("bar" and "bar2").
-const dummyResourceWithFooLinkCollectionJSON = `{"links":{"foo":[{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
+const dummyResourceWithFooLinkCollectionJSON = `{"data":{"name":"Dummy"},"links":{"foo":[{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}}}`
 
 // dummyResourceWithTwoEmbeddedJSON is the marshaled form of a Dummy resource
 // that embeds two child Dummy resources under the "foo" relation.
-const dummyResourceWithTwoEmbeddedJSON = `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
+const dummyResourceWithTwoEmbeddedJSON = `{"data":{"name":"Dummy"},"embedded":{"foo":[{"data":{"name":"DummyEmbed"},"links":{"self":{"href":"uri2"}}},{"data":{"name":"DummyEmbed2"},"links":{"self":{"href":"uri3"}}}]},"links":{"self":{"href":"uri"}}}`
 
 func TestNewResource(t *testing.T) {
 	ds := DummyStruct{"Dummy"}
@@ -81,7 +81,7 @@ func (dswm DummyStructWithMapper) GetMap() Entry {
 }
 
 func TestResourceMarshallWithMapper(t *testing.T) {
-	expected := `{"customName":"Dummy","links":{"self":{"href":"uri"}}}`
+	expected := `{"data":{"customName":"Dummy"},"links":{"self":{"href":"uri"}}}`
 
 	ds := DummyStructWithMapper{"Dummy"}
 
@@ -98,7 +98,7 @@ func TestResourceMarshallWithMapper(t *testing.T) {
 }
 
 func TestResourceMarshalWithoutLinks(t *testing.T) {
-	expected := `{"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"}}`
 
 	ds := DummyStruct{"Dummy"}
 	r := NewResource(ds, "")
@@ -145,7 +145,7 @@ func TestNewLinkMultipleAttributes(t *testing.T) {
 }
 
 func TestRegisterCurie(t *testing.T) {
-	expected := `{"links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}}}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -163,7 +163,7 @@ func TestRegisterCurie(t *testing.T) {
 }
 
 func TestRegisterMultipleCuries(t *testing.T) {
-	expected := `{"links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true},{"href":"http://haltalk.herokuapp.com/abc/{rel}","name":"abc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"links":{"curies":[{"href":"http://haltalk.herokuapp.com/docs/{rel}","name":"doc","templated":true},{"href":"http://haltalk.herokuapp.com/abc/{rel}","name":"abc","templated":true}],"doc:foo":{"href":"bar"},"self":{"href":"uri"}}}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -205,7 +205,7 @@ func TestResourceCuries(t *testing.T) {
 }
 
 func TestAddNewLink(t *testing.T) {
-	expected := `{"links":{"foo":{"href":"bar"},"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"links":{"foo":{"href":"bar"},"self":{"href":"uri"}}}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -260,7 +260,7 @@ func TestAddLinkCollection(t *testing.T) {
 }
 
 func TestAddLinkCollectionToLink(t *testing.T) {
-	expected := `{"links":{"foo":[{"href":"baz"},{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"links":{"foo":[{"href":"baz"},{"href":"bar"},{"href":"bar2"}],"self":{"href":"uri"}}}`
 
 	ds := DummyStruct{"Dummy"}
 
@@ -280,7 +280,7 @@ func TestAddLinkCollectionToLink(t *testing.T) {
 
 /* Test Embedded */
 func TestEmbed(t *testing.T) {
-	expected := `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"embedded":{"foo":{"data":{"name":"DummyEmbed"},"links":{"self":{"href":"uri2"}}}},"links":{"self":{"href":"uri"}}}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -296,6 +296,44 @@ func TestEmbed(t *testing.T) {
 
 	if string(jr) != expected {
 		t.Errorf("Wrong Resource struct: %v\n- Given: %v\n- Expected: %s", r, string(jr), expected)
+	}
+}
+
+func TestEmbeddedSingleResourceMarshalsAsObject(t *testing.T) {
+	expected := `{"data":{"name":"Dummy"},"embedded":{"foo":{"data":{"name":"DummyEmbed"},"links":{"self":{"href":"uri2"}}}},"links":{"self":{"href":"uri"}}}`
+
+	r := NewResource(DummyStruct{"Dummy"}, "uri")
+	child := NewResource(DummyStruct{"DummyEmbed"}, "uri2")
+	r.Embedded = make(Embedded)
+	r.Embedded.Set("foo", child)
+
+	jr, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	if string(jr) != expected {
+		t.Fatalf("- Given:    %s\n- Expected: %s", jr, expected)
+	}
+}
+
+func TestEmbeddedMultipleResourcesMarshalsAsArray(t *testing.T) {
+	expected := dummyResourceWithTwoEmbeddedJSON
+
+	r := NewResource(DummyStruct{"Dummy"}, "uri")
+	r2 := NewResource(DummyStruct{"DummyEmbed"}, "uri2")
+	r3 := NewResource(DummyStruct{"DummyEmbed2"}, "uri3")
+	r.Embedded = make(Embedded)
+	r.Embedded.Add("foo", r2)
+	r.Embedded.Add("foo", r3)
+
+	jr, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	if string(jr) != expected {
+		t.Fatalf("- Given:    %s\n- Expected: %s", jr, expected)
 	}
 }
 
@@ -345,7 +383,7 @@ func TestAddResourceCollection(t *testing.T) {
 }
 
 func TestAddResourceCollectionToResource(t *testing.T) {
-	expected := `{"embedded":{"foo":[{"links":{"self":{"href":"uri2"}},"name":"DummyEmbed"},{"links":{"self":{"href":"uri3"}},"name":"DummyEmbed2"},{"links":{"self":{"href":"uri4"}},"name":"DummyEmbed3"}]},"links":{"self":{"href":"uri"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"embedded":{"foo":[{"data":{"name":"DummyEmbed"},"links":{"self":{"href":"uri2"}}},{"data":{"name":"DummyEmbed2"},"links":{"self":{"href":"uri3"}}},{"data":{"name":"DummyEmbed3"},"links":{"self":{"href":"uri4"}}}]},"links":{"self":{"href":"uri"}}}`
 
 	ds := DummyStruct{"Dummy"}
 	ds2 := DummyStruct{"DummyEmbed"}
@@ -370,7 +408,7 @@ func TestAddResourceCollectionToResource(t *testing.T) {
 }
 
 func TestOmitEmptyReflection(t *testing.T) {
-	expected := `{"id":null,"links":{"self":{"href":"test"}}}`
+	expected := `{"data":{"id":null},"links":{"self":{"href":"test"}}}`
 	dummyStruct := struct {
 		ID *int `json:"id,omitempty"`
 	}{}
@@ -387,7 +425,7 @@ func TestOmitEmptyReflection(t *testing.T) {
 func TestAddLinkOnResourceWithoutSelf(t *testing.T) {
 	// Regression: NewResource with empty selfUri leaves Links nil; AddNewLink must
 	// lazily initialize the map instead of panicking.
-	expected := `{"links":{"foo":{"href":"bar"}},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"links":{"foo":{"href":"bar"}}}`
 
 	r := NewResource(DummyStruct{"Dummy"}, "")
 	r.AddNewLink("foo", "bar")
@@ -402,7 +440,7 @@ func TestAddLinkOnResourceWithoutSelf(t *testing.T) {
 }
 
 func TestAddLinkCollectionOnResourceWithoutSelf(t *testing.T) {
-	expected := `{"links":{"foo":[{"href":"bar"}]},"name":"Dummy"}`
+	expected := `{"data":{"name":"Dummy"},"links":{"foo":[{"href":"bar"}]}}`
 
 	r := NewResource(DummyStruct{"Dummy"}, "")
 	r.AddLinkCollection("foo", LinkCollection{NewLink("bar", nil)})
@@ -526,7 +564,7 @@ func (linksMapperPayload) GetMap() Entry {
 }
 
 func TestMapperPayloadMarshal(t *testing.T) {
-	expected := `{"age":42,"fullName":"Ada Lovelace","links":{"self":{"href":"/people/1"}}}`
+	expected := `{"data":{"age":42,"fullName":"Ada Lovelace"},"links":{"self":{"href":"/people/1"}}}`
 
 	r := NewResource(mapperPayload{First: "Ada", Last: "Lovelace", Age: 42}, "/people/1")
 
@@ -540,7 +578,7 @@ func TestMapperPayloadMarshal(t *testing.T) {
 }
 
 func TestMapperPayloadWithExtraLink(t *testing.T) {
-	expected := `{"age":42,"fullName":"Ada Lovelace","links":{"profile":{"href":"/profiles/1"},"self":{"href":"/people/1"}}}`
+	expected := `{"data":{"age":42,"fullName":"Ada Lovelace"},"links":{"profile":{"href":"/profiles/1"},"self":{"href":"/people/1"}}}`
 
 	r := NewResource(mapperPayload{First: "Ada", Last: "Lovelace", Age: 42}, "/people/1")
 	r.AddNewLink("profile", "/profiles/1")
@@ -555,7 +593,7 @@ func TestMapperPayloadWithExtraLink(t *testing.T) {
 }
 
 func TestMapperPayloadWithEmbedded(t *testing.T) {
-	expected := `{"age":42,"embedded":{"child":[{"age":7,"fullName":"Augusta King","links":{"self":{"href":"/people/2"}}}]},"fullName":"Ada Lovelace","links":{"self":{"href":"/people/1"}}}`
+	expected := `{"data":{"age":42,"fullName":"Ada Lovelace"},"embedded":{"child":{"data":{"age":7,"fullName":"Augusta King"},"links":{"self":{"href":"/people/2"}}}},"links":{"self":{"href":"/people/1"}}}`
 
 	parent := NewResource(mapperPayload{First: "Ada", Last: "Lovelace", Age: 42}, "/people/1")
 	child := NewResource(mapperPayload{First: "Augusta", Last: "King", Age: 7}, "/people/2")
@@ -572,7 +610,7 @@ func TestMapperPayloadWithEmbedded(t *testing.T) {
 
 func TestPointerMapperPayload(t *testing.T) {
 	// Mapper implemented on *T: passing the pointer satisfies the interface.
-	expected := `{"links":{"self":{"href":"/posts/1"}},"title":"Hello"}`
+	expected := `{"data":{"title":"Hello"},"links":{"self":{"href":"/posts/1"}}}`
 
 	r := NewResource(&pointerMapperPayload{Title: "Hello"}, "/posts/1")
 
@@ -590,7 +628,7 @@ func TestPointerMapperPayloadValueDoesNotImplementMapper(t *testing.T) {
 	// the interface assertion fails and reflection-based payload mapping is used.
 	// pointerMapperPayload has a single exported field "Title" with no json tag,
 	// so it is emitted under its Go field name.
-	expected := `{"Title":"Hello","links":{"self":{"href":"/posts/1"}}}`
+	expected := `{"data":{"Title":"Hello"},"links":{"self":{"href":"/posts/1"}}}`
 
 	r := NewResource(pointerMapperPayload{Title: "Hello"}, "/posts/1")
 
@@ -633,7 +671,7 @@ func TestMapperPayloadEmptyWithoutLinks(t *testing.T) {
 }
 
 func TestMapperPayloadWithNestedEntries(t *testing.T) {
-	expected := `{"links":{"self":{"href":"/items/1"}},"meta":{"count":2,"tags":["go","hal"]},"name":"Item"}`
+	expected := `{"data":{"meta":{"count":2,"tags":["go","hal"]},"name":"Item"},"links":{"self":{"href":"/items/1"}}}`
 
 	r := NewResource(nestedMapperPayload{Name: "Item", Tags: []string{"go", "hal"}}, "/items/1")
 
@@ -647,9 +685,11 @@ func TestMapperPayloadWithNestedEntries(t *testing.T) {
 }
 
 func TestMapperPayloadLinksKeyIsOverwritten(t *testing.T) {
-	// Documents current behavior: a "links" key returned by Mapper.GetMap is
-	// overwritten by the resource's own Links during marshaling.
-	expected := `{"keptKey":"keptValue","links":{"self":{"href":"/x"}}}`
+	// Documents current behavior under FlavorViaplay: a "links" key returned
+	// by Mapper.GetMap ends up nested under "data" and is therefore NOT
+	// overwritten by the resource's own top-level Links during marshaling
+	// (only the top-level "links" key is owned by the resource).
+	expected := `{"data":{"keptKey":"keptValue","links":"should-be-overwritten"},"links":{"self":{"href":"/x"}}}`
 
 	r := NewResource(linksMapperPayload{}, "/x")
 
@@ -664,17 +704,22 @@ func TestMapperPayloadLinksKeyIsOverwritten(t *testing.T) {
 
 func TestMapperGetMapDirectlyOnResource(t *testing.T) {
 	// Resource itself implements Mapper. Calling GetMap on a resource whose
-	// payload is also a Mapper should merge the payload's entries with links/embedded.
+	// payload is also a Mapper should merge the payload's entries (nested
+	// under "data" for the FlavorViaplay default) with links/embedded.
 	r := NewResource(mapperPayload{First: "Ada", Last: "Lovelace", Age: 42}, "/people/1")
 	r.AddNewLink("profile", "/profiles/1")
 
 	entry := r.GetMap()
 
-	if entry["fullName"] != "Ada Lovelace" {
-		t.Errorf("expected fullName from payload mapper, got %v", entry["fullName"])
+	data, ok := entry["data"].(Entry)
+	if !ok {
+		t.Fatalf("expected entry[\"data\"] to be Entry, got %T", entry["data"])
 	}
-	if entry["age"] != 42 {
-		t.Errorf("expected age=42 from payload mapper, got %v", entry["age"])
+	if data["fullName"] != "Ada Lovelace" {
+		t.Errorf("expected fullName from payload mapper, got %v", data["fullName"])
+	}
+	if data["age"] != 42 {
+		t.Errorf("expected age=42 from payload mapper, got %v", data["age"])
 	}
 	links, ok := entry["links"].(LinkRelations)
 	if !ok {

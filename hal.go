@@ -18,15 +18,25 @@ import (
 )
 
 type (
-	Entry map[string]interface{}
+	Entry map[string]any
 
 	// Mapper is the interface implemented by the objects
 	// that can be converted into HAL format.
+	//
+	// GetMap must return a freshly allocated Entry on every call (e.g. a
+	// map literal), not a shared/cached map reused across calls: Resource's
+	// marshaling may add "links"/"embedded" (or "data" nesting) entries
+	// directly into the returned map for performance.
 	Mapper interface {
 		GetMap() Entry
 	}
 
 	Relation string
+
+	// Flavor selects the JSON key names and payload layout used when
+	// marshaling a Resource. See FlavorDefault, FlavorHAL and
+	// FlavorViaplay for the supported flavors.
+	Flavor int
 
 	CurieHandle struct {
 		Name string
@@ -34,25 +44,73 @@ type (
 	}
 
 	// LinkAttr types that store hyperlinks and its attributes.
-	LinkAttr       map[string]interface{}
+	LinkAttr       map[string]any
 	Link           LinkAttr
 	LinkCollection []Link
-	LinkRelations  map[Relation]interface{}
+	LinkRelations  map[Relation]any
 
 	// Resource is a struct that stores a resource data.
 	// It represents a converted object in the HAL spec by
 	// containing all its fields and also a set of related links
 	// and a sub-set of recursively related resources.
 	Resource struct {
-		Payload  interface{}
+		Payload  any
 		Links    LinkRelations
 		Embedded Embedded
 		Curies   map[string]*CurieHandle
+		// Flavor selects the key names and payload layout used when this
+		// resource is marshaled to JSON. It defaults to DefaultFlavor
+		// when created via NewResource, and can be overridden per-resource
+		// by assigning the field directly (Resource has no constructor
+		// options, so this is a plain exported field).
+		Flavor Flavor
 	}
 	ResourceCollection []*Resource
 
-	Embedded map[Relation]interface{}
+	// Embedded stores related resources by relation. Internally the relation is
+	// always represented as a collection so that the API is explicit and does not
+	// mix object and array values in the same map.
+	Embedded map[Relation]ResourceCollection
 )
+
+const (
+	// FlavorDefault preserves this library's pre-v2 historical behavior:
+	// payload fields are flattened directly onto the resource object, and
+	// the "links"/"embedded" keys are unprefixed. It is the zero value of
+	// Flavor, but is no longer the flavor NewResource assigns by default
+	// (see DefaultFlavor); it remains available as an explicit opt-in for
+	// code that depended on the old shape.
+	FlavorDefault Flavor = iota
+
+	// FlavorHAL produces canonical HAL documents as described by
+	// https://datatracker.ietf.org/doc/html/draft-kelly-json-hal: payload
+	// fields are flattened directly onto the resource object, and related
+	// resources/links are exposed under the "_links" and "_embedded" keys.
+	FlavorHAL
+
+	// FlavorViaplay produces documents matching the flavor described in
+	// specs/viaplay-hateoas.md: payload fields are nested under a "data"
+	// key, and related resources/links are exposed under the unprefixed
+	// "links" and "embedded" keys.
+	FlavorViaplay
+)
+
+// DefaultFlavor is the Flavor assigned to resources created via NewResource.
+// It defaults to FlavorViaplay since this package implements the Viaplay
+// HATEOAS spec (specs/viaplay-hateoas.md) first and foremost; set it to
+// FlavorHAL (or FlavorDefault for the legacy flattened/unprefixed shape)
+// once during application start-up to switch the whole program instead of
+// setting Resource.Flavor on every resource individually.
+var DefaultFlavor = FlavorViaplay
+
+// keys returns the JSON key names used for the links and embedded
+// collections under this flavor.
+func (f Flavor) keys() (linksKey, embeddedKey string) {
+	if f == FlavorHAL {
+		return "_links", "_embedded"
+	}
+	return "links", "embedded"
+}
 
 // AddNewLink adds a link to the resources_link collection
 // prepended with the curie Name
@@ -61,77 +119,53 @@ func (c CurieHandle) AddNewLink(rel Relation, href string) {
 	c.AddLink(rel, NewLink(href, nil))
 }
 
-// AddCollection appends the resource into the list of embedded
+// AddCollection appends the resource collection into the list of embedded
 // resources with the specified relation.
-// r should be  a ResourceCollection
 func (e Embedded) AddCollection(rel Relation, r ResourceCollection) {
-	n := e[rel]
-	if n == nil {
-		// new embed
-		e[rel] = r
+	if len(r) == 0 || e == nil {
 		return
 	}
-
-	if nc, ok := n.([]*Resource); ok {
-		e[rel] = append(nc, r...)
-		return
-	}
-
-	if nr, ok := n.(*Resource); ok {
-		e[rel] = append([]*Resource{nr}, r...)
-		return
-	}
+	e[rel] = append(append(ResourceCollection(nil), e[rel]...), r...)
 }
 
-// Add appends the resource into the list of embedded
-// resources with the specified relation.
-// r should be a Resource
+// Add appends a resource to the relation.
 func (e Embedded) Add(rel Relation, r *Resource) {
-	n := e[rel]
-	if n == nil {
-		// new embed
-		e[rel] = []*Resource{r}
+	if r == nil || e == nil {
 		return
 	}
-
-	if nec, ok := n.([]*Resource); ok {
-		e[rel] = append(nec, r)
-		return
-	}
-
-	if nee, ok := n.(*Resource); ok {
-		e[rel] = append([]*Resource{nee}, r)
-		return
-	}
-
-	// something went wrong.. replace what is there with what is new
-	e[rel] = []*Resource{r}
+	e[rel] = append(e[rel], r)
 }
 
-// Set sets the resource into the list of embedded
-// resources with the specified relation. It replaces
-// any existing resources associated with the relation.
-// r should be a pointer to a Resource
+// Set replaces the relation with a single embedded resource.
 func (e Embedded) Set(rel Relation, r *Resource) {
-	e[rel] = r
+	if e == nil {
+		return
+	}
+	if r == nil {
+		delete(e, rel)
+		return
+	}
+	e[rel] = ResourceCollection{r}
 }
 
-// SetCollection sets the resource into the list of embedded
-// resources with the specified relation. It replaces
-// any existing resources associated with the relation.
-// r should be a ResourceCollection
+// SetCollection replaces the relation with an explicit collection of resources.
 func (e Embedded) SetCollection(rel Relation, r ResourceCollection) {
-	e[rel] = r
+	if e == nil {
+		return
+	}
+	if len(r) == 0 {
+		delete(e, rel)
+		return
+	}
+	e[rel] = append(ResourceCollection(nil), r...)
 }
 
-// Get gets the resources associated with the
-// given relation.
-//func (e Embedded) Get(rel Relation) []*Resource {
-//	return e[rel]
-//}
+// Get returns the embedded resources associated with the given relation.
+func (e Embedded) Get(rel Relation) ResourceCollection {
+	return append(ResourceCollection(nil), e[rel]...)
+}
 
-// Del deletes the resources associated with the
-// given relation.
+// Del deletes the resources associated with the given relation.
 func (e Embedded) Del(rel Relation) {
 	delete(e, rel)
 }
@@ -142,6 +176,7 @@ func NewResource(p interface{}, selfUri string) *Resource {
 	var r Resource
 
 	r.Payload = p
+	r.Flavor = DefaultFlavor
 
 	if selfUri != "" {
 		r.Links = make(LinkRelations)
@@ -251,30 +286,57 @@ func (r *Resource) EmbedCollection(rel Relation, re ResourceCollection) {
 
 // GetMap implements the interface Mapper.
 func (r Resource) GetMap() Entry {
-	var mp Entry
-	// Check if payload implements Mapper interface
-	if mapper, ok := r.Payload.(Mapper); ok {
-		mp = mapper.GetMap()
-	} else {
-		mp = r.getPayloadMap()
+	mp := r.payloadMap()
+	linksKey, embeddedKey := r.Flavor.keys()
+
+	if r.Flavor == FlavorViaplay {
+		// FlavorViaplay nests payload fields under "data" instead of
+		// flattening them onto the resource object (specs/viaplay-hateoas.md #4).
+		mapped := make(Entry, 3)
+
+		if len(mp) > 0 {
+			mapped["data"] = mp
+		}
+
+		if len(r.Links) > 0 {
+			mapped[linksKey] = r.Links
+		}
+
+		if len(r.Embedded) > 0 {
+			mapped[embeddedKey] = r.Embedded
+		}
+
+		return mapped
 	}
 
-	// Pre-size to avoid map regrowth: payload entries + at most "links" + "embedded".
-	mapped := make(Entry, len(mp)+2)
-
-	for k, v := range mp {
-		mapped[k] = v
+	// Flattened flavors (FlavorDefault, FlavorHAL): add links/embedded
+	// directly into mp instead of copying into a new map. This assumes mp is
+	// always freshly allocated per call (true for getPayloadMap, and for any
+	// well-behaved Mapper.GetMap implementation returning a literal/fresh
+	// Entry rather than a shared/cached map instance across calls).
+	if mp == nil {
+		mp = make(Entry, 2)
 	}
 
 	if len(r.Links) > 0 {
-		mapped["links"] = r.Links
+		mp[linksKey] = r.Links
 	}
 
 	if len(r.Embedded) > 0 {
-		mapped["embedded"] = r.Embedded
+		mp[embeddedKey] = r.Embedded
 	}
 
-	return mapped
+	return mp
+}
+
+// payloadMap resolves the resource's payload into an Entry, preferring the
+// Mapper interface when the payload implements it and falling back to
+// reflection-based field mapping otherwise.
+func (r Resource) payloadMap() Entry {
+	if mapper, ok := r.Payload.(Mapper); ok {
+		return mapper.GetMap()
+	}
+	return r.getPayloadMap()
 }
 
 // payloadField is a cached description of a struct field that should be
@@ -337,7 +399,7 @@ func (r *Resource) getPayloadMap() Entry {
 
 	val := reflect.ValueOf(r.Payload)
 	// Dereference pointers so callers can pass either T or *T.
-	for val.Kind() == reflect.Ptr {
+	for val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return Entry{}
 		}
@@ -356,6 +418,33 @@ func (r *Resource) getPayloadMap() Entry {
 	}
 
 	return payloadMap
+}
+
+// MarshalJSON is a Marshaler implementation for Embedded.
+// HAL permits a single embedded resource to be serialized as a single object
+// and multiple resources as an array.
+func (e Embedded) MarshalJSON() ([]byte, error) {
+	if len(e) == 0 {
+		return []byte("{}"), nil
+	}
+
+	// Single marshal pass: let the standard encoder pick the shape (object
+	// vs array) directly from the Go value's type, instead of marshaling
+	// each relation individually into an intermediate json.RawMessage and
+	// then marshaling the resulting map a second time.
+	items := make(map[Relation]any, len(e))
+	for rel, resources := range e {
+		switch len(resources) {
+		case 0:
+			continue
+		case 1:
+			items[rel] = resources[0]
+		default:
+			items[rel] = resources
+		}
+	}
+
+	return json.Marshal(items)
 }
 
 // MarshalJSON is a Marshaler interface implementation

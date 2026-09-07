@@ -6,7 +6,7 @@ version: '3'
 tasks:
   test:
     cmds:
-      - go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go
+      - go test -v ./... -covermode=count -coverpkg=github.com/nentgroup/viaplay-hateoas-go/v2
 
   setup:tools:
     desc: Install and configure development tools (lefthook, commitlint, golangci-lint, Task)
@@ -46,4 +46,12 @@ tasks:
       - go mod tidy
       - echo "✅ Dependencies installed"
 
+  graphify:build:
+    desc: Build/refresh the graphify-rs knowledge graph for this repo
+    cmds:
+      - graphify-rs build --no-llm --output graphify-rs-out
+  graphify:serve:
+    desc: Start the graphify-rs MCP server for agentic coding tools
+    cmds:
+      - graphify-rs serve --graph graphify-rs-out/graph.json
 ...

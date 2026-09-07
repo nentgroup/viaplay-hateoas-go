@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	hal "github.com/nentgroup/viaplay-hateoas-go"
+	hal "github.com/nentgroup/viaplay-hateoas-go/v2"
 )
 
 type (
